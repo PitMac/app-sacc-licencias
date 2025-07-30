@@ -1,20 +1,30 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  MD3LightTheme as DefaultTheme,
+  MD3DarkTheme as DefaultDarkTheme,
+  PaperProvider,
+} from "react-native-paper";
+import RootNavigator from "./src/navigators/RootNavigator";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
+const theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: "#d5a203",
+    secondary: "#947415",
+    secondaryContainer: "#e6b31e",
+    onSecondaryContainer: "white",
+    onBackground: "#d5a200",
+    background: "#f0f0f0", // gris claro por defecto
+  },
+};
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <GestureHandlerRootView>
+      <PaperProvider theme={theme}>
+        <RootNavigator />
+      </PaperProvider>
+    </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
