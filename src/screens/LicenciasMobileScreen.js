@@ -1,4 +1,10 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  RefreshControl,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import CustomAppBar from "../components/CustomAppBar";
 import Loader from "../components/Loader";
@@ -124,8 +130,14 @@ export default function LicenciasMobileScreen() {
         renderItem={renderItem}
         estimatedItemSize={118}
         keyExtractor={(item, index) => index.toString()}
-        refreshing={isLoaging}
-        onRefresh={() => setIsRefresh(!isRefresh)}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoaging}
+            onRefresh={() => setIsRefresh(!isRefresh)}
+            colors={[PRIMARY_COLOR]}
+            tintColor={PRIMARY_COLOR}
+          />
+        }
       />
     </View>
   );

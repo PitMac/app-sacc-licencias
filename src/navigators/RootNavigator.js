@@ -1,34 +1,53 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import AppNavigator from "./AppNavigator";
 import AuthNavigator from "./AuthNavigator";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decodeJWTFechaexp } from "../utils/utils";
 import useAuthStore from "../stores/AuthStore";
-import { View, Text } from "react-native";
+import { AppState } from "react-native";
 import Loader from "../components/Loader";
 
 export default function RootNavigator() {
   const { token, logout, login } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const appState = useRef(AppState.currentState);
+
+  const validarToken = async () => {
+    const tokenStored = await AsyncStorage.getItem("userToken");
+    if (tokenStored) {
+      const fechaExpToken = decodeJWTFechaexp(tokenStored);
+      if (fechaExpToken.exp < Date.now() / 1000) {
+        logout();
+      } else {
+        login(tokenStored);
+      }
+    } else {
+      logout();
+    }
+  };
 
   useEffect(() => {
     const init = async () => {
-      const token = await AsyncStorage.getItem("userToken");
-      if (token) {
-        const fechaExpToken = decodeJWTFechaexp(token);
-        if (fechaExpToken.exp < Date.now() / 1000) {
-          logout();
-        } else {
-          login(token);
-        }
-      } else {
-        logout();
-      }
+      await validarToken();
       setLoading(false);
     };
     init();
-  }, [token]);
+
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === "active"
+      ) {
+        validarToken();
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   return (
     <>

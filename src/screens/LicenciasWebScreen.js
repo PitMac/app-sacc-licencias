@@ -11,6 +11,8 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import CustomFAB from "../components/CustomFAB";
 import { TextInput } from "react-native-paper";
 import { PRIMARY_COLOR } from "../utils/colors";
+import { calcularDiasRestantes } from "../utils/utils";
+import { RefreshControl } from "react-native-gesture-handler";
 
 export default function LicenciasWebScreen() {
   const navigation = useNavigation();
@@ -65,27 +67,8 @@ export default function LicenciasWebScreen() {
     );
   };
 
-  const calcularDiasRestantes = (fechaPagoStr, mesesStr) => {
-    if (mesesStr === "999") return "Ilimitado";
-
-    const meses = parseInt(mesesStr, 10);
-    if (!fechaPagoStr || isNaN(meses)) return "-";
-
-    const fechaPago = new Date(fechaPagoStr);
-    const fechaExpira = new Date(fechaPago);
-    fechaExpira.setMonth(fechaExpira.getMonth() + meses);
-
-    const hoy = new Date();
-    const diffTime = fechaExpira - hoy;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return "Expirado";
-
-    return diffDays + " días";
-  };
-
   const renderItem = ({ item }) => {
-    const tiempoRestante = calcularDiasRestantes(item.fecha_pago, item.meses);
+    const { dias } = calcularDiasRestantes(item.fecha_pago, item.meses);
     return (
       <Swipeable renderRightActions={() => renderRightActions(item)}>
         <View style={styles.licenciaItem}>
@@ -97,7 +80,7 @@ export default function LicenciasWebScreen() {
           </Text>
           <Text>Fecha de Pago: {item.fecha_pago?.split(" ")[0]}</Text>
           <Text>Meses: {item.meses}</Text>
-          <Text>Tiempo restante: {tiempoRestante}</Text>
+          <Text>Tiempo restante: {dias}</Text>
         </View>
       </Swipeable>
     );
@@ -146,8 +129,14 @@ export default function LicenciasWebScreen() {
         renderItem={renderItem}
         estimatedItemSize={118}
         keyExtractor={(item, index) => index.toString()}
-        refreshing={isLoaging}
-        onRefresh={() => setIsRefresh(!isRefresh)}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoaging}
+            onRefresh={() => setIsRefresh(!isRefresh)}
+            colors={[PRIMARY_COLOR]}
+            tintColor={PRIMARY_COLOR}
+          />
+        }
       />
     </View>
   );
