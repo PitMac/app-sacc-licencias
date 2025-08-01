@@ -7,6 +7,16 @@ import { decodeJWTFechaexp } from "../utils/utils";
 import useAuthStore from "../stores/AuthStore";
 import { AppState } from "react-native";
 import Loader from "../components/Loader";
+import * as Notifications from "expo-notifications";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function RootNavigator() {
   const { token, logout, login } = useAuthStore();
@@ -26,6 +36,15 @@ export default function RootNavigator() {
       logout();
     }
   };
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== "granted") {
+        alert("Permisos de notificaciones no otorgados");
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     const init = async () => {

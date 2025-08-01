@@ -13,6 +13,7 @@ import { TextInput } from "react-native-paper";
 import { PRIMARY_COLOR } from "../utils/colors";
 import { calcularDiasRestantes } from "../utils/utils";
 import { RefreshControl } from "react-native-gesture-handler";
+import * as Notifications from "expo-notifications";
 
 export default function LicenciasWebScreen() {
   const navigation = useNavigation();
@@ -34,12 +35,60 @@ export default function LicenciasWebScreen() {
     async function getInformation() {
       setIsLoaging(true);
       const response = await instance.get("licencia-web/list");
+
       setData(response.data.data);
       setFilteredData(response.data.data);
       setIsLoaging(false);
     }
     getInformation();
   }, [isRefresh]);
+
+  useEffect(() => {
+    async function sendNotifications() {
+      try {
+        const response = await instance.get("licencia-web/list");
+        const licenciasQueExpiran = response.data.data.filter((item) => {
+          const { dias } = calcularDiasRestantes(item.fecha_pago, item.meses);
+
+          if (dias === "Ilimitado" || dias === "Expirado") return false;
+
+          const diasNumericos = parseInt(
+            dias.toString().replace(/\D/g, ""),
+            10
+          );
+
+          if (isNaN(diasNumericos)) return false;
+
+          return diasNumericos >= 0 && diasNumericos <= 5;
+        });
+
+        for (let licencia of licenciasQueExpiran) {
+          const { dias } = calcularDiasRestantes(
+            licencia.fecha_pago,
+            licencia.meses
+          );
+          const diasNumericos = parseInt(
+            dias.toString().replace(/\D/g, ""),
+            10
+          );
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: `⚠️ Licencia de ${(
+                licencia.client_id ?? ""
+              ).toUpperCase()}`,
+              body: `La licencia de ${(
+                licencia.client_id ?? ""
+              ).toUpperCase()} expira en ${dias}`,
+            },
+            trigger: null,
+          });
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    sendNotifications();
+  }, []);
 
   useEffect(() => {
     if (searchText === "") {

@@ -27,23 +27,47 @@ export default function LoginScreen() {
     password: "",
   });
   const [canUseBiometric, setCanUseBiometric] = useState(false);
+  const [biometricType, setBiometricType] = useState(null);
   const [storedCredentials, setStoredCredentials] = useState(null);
   const [showForm, setShowForm] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const checkBiometric = async () => {
+      setIsLoading(true);
+
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
       const credentials = await AsyncStorage.getItem("savedCredentials");
-      setIsLoading(true);
+
       if (hasHardware && isEnrolled && credentials) {
+        const supportedTypes =
+          await LocalAuthentication.supportedAuthenticationTypesAsync();
+
+        if (
+          supportedTypes.includes(
+            LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION
+          )
+        ) {
+          setBiometricType("Face ID");
+        } else if (
+          supportedTypes.includes(
+            LocalAuthentication.AuthenticationType.FINGERPRINT
+          )
+        ) {
+          setBiometricType("Huella");
+        } else {
+          setBiometricType("Biométrico");
+        }
+
         setCanUseBiometric(true);
         setShowForm(false);
         setStoredCredentials(JSON.parse(credentials));
       }
+
       setIsLoading(false);
     };
+
     checkBiometric();
   }, []);
 
@@ -106,6 +130,17 @@ export default function LoginScreen() {
     } catch (e) {
       setIsLoading(false);
       Alert.alert("Error", "No se pudo iniciar sesión");
+    }
+  };
+
+  const getBiometricIconName = (type) => {
+    switch (type) {
+      case "Face ID":
+        return "face-recognition";
+      case "Huella":
+        return "fingerprint";
+      default:
+        return "shield-lock-outline";
     }
   };
 
@@ -188,13 +223,13 @@ export default function LoginScreen() {
                 style={styles.buttonCard}
               >
                 <MaterialCommunityIcons
-                  name="fingerprint"
+                  name={getBiometricIconName(biometricType)}
                   size={50}
                   color={PRIMARY_COLOR}
                   style={{ marginBottom: 6 }}
                 />
                 <Text style={{ fontWeight: "bold", color: PRIMARY_COLOR }}>
-                  Huella
+                  {biometricType ?? "Biométrico"}
                 </Text>
               </TouchableOpacity>
 

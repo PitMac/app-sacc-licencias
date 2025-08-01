@@ -5,6 +5,7 @@ import {
 } from "react-native-paper";
 import RootNavigator from "./src/navigators/RootNavigator";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { StatusBar } from "expo-status-bar";
 
 const theme = {
   ...DefaultTheme,
@@ -22,6 +23,7 @@ const theme = {
 export default function App() {
   return (
     <GestureHandlerRootView>
+      <StatusBar barStyle="dark-content" />
       <PaperProvider theme={theme}>
         <RootNavigator />
       </PaperProvider>
